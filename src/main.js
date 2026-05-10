@@ -1,4 +1,4 @@
-import { course, findUnit, findTopic, findActivity } from './course-data.js';
+import { getCourse, findUnit, findTopic, findActivity } from './course-data.js';
 import {
   getGamifyState,
   addPoints,
@@ -17,8 +17,9 @@ function parseHash() {
   return { parts };
 }
 
-function renderHeader() {
+async function renderHeader() {
   const s = getGamifyState();
+  const course = await getCourse();
   return `
     <header class="shell-header">
       <div class="brand">
@@ -67,8 +68,9 @@ async function loadInitialProgress() {
   }
 }
 
-function getCourseProgress() {
+async function getCourseProgress() {
   const s = getGamifyState();
+  const course = await getCourse();
   const activities = course.units.flatMap((u) => u.activities.map((a) => `${u.id}:${a.id}`));
   const done = activities.filter(isMissionDone).length;
   const total = activities.length;
@@ -91,19 +93,21 @@ function getUnitProgress(unit) {
   };
 }
 
-function getUnitIndex(unitId) {
+async function getUnitIndex(unitId) {
+  const course = await getCourse();
   return course.units.findIndex((u) => u.id === unitId);
 }
 
-function isUnitUnlocked(unitId) {
-  const index = getUnitIndex(unitId);
+async function isUnitUnlocked(unitId) {
+  const index = await getUnitIndex(unitId);
   if (index <= 0) return true;
+  const course = await getCourse();
   const previousUnit = course.units[index - 1];
   return previousUnit.activities.every((a) => isMissionDone(`${previousUnit.id}:${a.id}`));
 }
 
-function isActivityUnlocked(unit, activityId) {
-  if (!isUnitUnlocked(unit.id)) return false;
+async function isActivityUnlocked(unit, activityId) {
+  if (!(await isUnitUnlocked(unit.id))) return false;
   const index = unit.activities.findIndex((a) => a.id === activityId);
   if (index <= 0) return true;
   const previousActivity = unit.activities[index - 1];
@@ -123,25 +127,24 @@ function routeLocked(title, message, backHref = '#/') {
   bindReset();
 }
 
-function routeHome() {
-  const progress = getCourseProgress();
-  const cards = course.units
-    .map((u) => {
-      const unlocked = isUnitUnlocked(u.id);
-      return `
-      <article class="card ${unlocked ? '' : 'card-locked'}">
-        <h2>${escapeHtml(u.title)}</h2>
-        <p>${escapeHtml(u.summary)}</p>
-        ${unlocked
-          ? `<a class="btn" href="#/unidad/${u.id}">Abrir unidad</a>`
-          : `<button class="btn btn-disabled" type="button">Unidad bloqueada</button>`}
-      </article>
-    `;
-    })
-    .join('');
+async function routeHome() {
+  const progress = await getCourseProgress();
+  const course = await getCourse();
+  const cards = await Promise.all(course.units.map(async (u) => {
+    const unlocked = await isUnitUnlocked(u.id);
+    return `
+    <article class="card ${unlocked ? '' : 'card-locked'}">
+      <h2>${escapeHtml(u.title)}</h2>
+      <p>${escapeHtml(u.summary)}</p>
+      ${unlocked
+        ? `<a class="btn" href="#/unidad/${u.id}">Abrir unidad</a>`
+        : `<button class="btn btn-disabled" type="button">Unidad bloqueada</button>`}
+    </article>
+  `;
+  }));
 
   app.innerHTML = `
-    ${renderHeader()}
+    ${await renderHeader()}
     <main class="shell-main">
       <div class="hero">
         <h1>Arquitectura multinivel</h1>
@@ -158,7 +161,7 @@ function routeHome() {
           <span class="pill">${progress.missions} misiones</span>
         </div>
       </section>
-      <section class="grid-cards">${cards}</section>
+      <section class="grid-cards">${cards.join('')}</section>
       <div class="byod-strip">
         <strong>Estrategia BYOD.</strong> Abre esta app en tu móvil o portátil; el módulo AR usa la cámara cuando lo permites.
         Para WebAR con marcador, emplea un patrón <em>Hiro</em> frente al panel derecho en la actividad (pantalla impresa u otro dispositivo).
@@ -169,10 +172,10 @@ function routeHome() {
   bindReset();
 }
 
-function routeUnit(unitId) {
-  const u = findUnit(unitId);
+async function routeUnit(unitId) {
+  const u = await findUnit(unitId);
   if (!u) return routeNotFound();
-  if (!isUnitUnlocked(u.id)) {
+  if (!(await isUnitUnlocked(u.id))) {
     return routeLocked(
       'Unidad bloqueada',
       'Completa las actividades de la unidad anterior para desbloquear esta unidad.',
@@ -200,7 +203,7 @@ function routeUnit(unitId) {
     .join('');
 
   app.innerHTML = `
-    ${renderHeader()}
+    ${await renderHeader()}
     <main class="shell-main">
       <nav class="breadcrumb"><a href="#/">Inicio</a> / ${escapeHtml(u.title)}</nav>
       <div class="hero">
@@ -220,15 +223,15 @@ function routeUnit(unitId) {
   bindReset();
 }
 
-function routeTopic(unitId, topicId) {
-  const u = findUnit(unitId);
+async function routeTopic(unitId, topicId) {
+  const u = await findUnit(unitId);
   const t = findTopic(u, topicId);
   if (!u || !t) return routeNotFound();
   const activity = u.activities.find((a) => a.id === t.activityId);
-  const canContinue = activity ? isActivityUnlocked(u, activity.id) : true;
+  const canContinue = activity ? await isActivityUnlocked(u, activity.id) : true;
 
   app.innerHTML = `
-    ${renderHeader()}
+    ${await renderHeader()}
     <main class="shell-main topic-layout">
       <nav class="breadcrumb">
         <a href="#/">Inicio</a> / <a href="#/unidad/${u.id}">${escapeHtml(u.title)}</a> / ${escapeHtml(t.title)}
@@ -254,12 +257,12 @@ function routeTopic(unitId, topicId) {
   requestAnimationFrame(() => mountTopicScene(root, t.modelPreset));
 }
 
-function routeActivity(unitId, activityId) {
-  const u = findUnit(unitId);
+async function routeActivity(unitId, activityId) {
+  const u = await findUnit(unitId);
   const act = findActivity(u, activityId);
   if (!u || !act) return routeNotFound();
 
-  const unlocked = isActivityUnlocked(u, activityId);
+  const unlocked = await isActivityUnlocked(u, activityId);
   const missionKey = `${unitId}:${activityId}`;
   const done = isMissionDone(missionKey);
 
@@ -389,15 +392,15 @@ function bindReset() {
   });
 }
 
-function navigate() {
+async function navigate() {
   disposeTopicScene();
   const { parts } = parseHash();
-  if (parts.length === 0 || parts[0] === '') return routeHome();
-  if (parts[0] === 'unidad' && parts[1]) return routeUnit(parts[1]);
-  if (parts[0] === 'tematica' && parts[1] && parts[2]) return routeTopic(parts[1], parts[2]);
-  if (parts[0] === 'actividad' && parts[1] && parts[2]) return routeActivity(parts[1], parts[2]);
+  if (parts.length === 0 || parts[0] === '') return await routeHome();
+  if (parts[0] === 'unidad' && parts[1]) return await routeUnit(parts[1]);
+  if (parts[0] === 'tematica' && parts[1] && parts[2]) return await routeTopic(parts[1], parts[2]);
+  if (parts[0] === 'actividad' && parts[1] && parts[2]) return await routeActivity(parts[1], parts[2]);
   routeNotFound();
 }
 
-window.addEventListener('hashchange', navigate);
-loadInitialProgress().then(navigate);
+window.addEventListener('hashchange', () => navigate());
+loadInitialProgress().then(() => navigate());
