@@ -1,0 +1,306 @@
+/* SAIM — Universidad FESC demo palette */
+:root {
+  --bg: #0f1008;
+  --surface: #1a1c12;
+  --border: #2d3220;
+  --text: #fefefe;
+  --muted: #bfbfbf;
+  --accent: #494904;
+  --accent-bright: #6b6b0a;
+  --success: #3d7c47;
+  --shadow: rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--muted);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--text);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.brand strong {
+  letter-spacing: 0.02em;
+  font-size: 1rem;
+}
+.brand span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+.stats-bar .pill {
+  background: var(--accent);
+  color: var(--text);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+main.shell-main {
+  flex: 1;
+  padding: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.hero {
+  margin-bottom: 2rem;
+}
+.hero h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+.hero p {
+  color: var(--muted);
+  max-width: 65ch;
+  margin: 0;
+}
+
+.grid-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+.card p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.45rem 0.95rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--text);
+  transition: background 0.15s ease;
+}
+.btn:hover {
+  background: var(--accent-bright);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.breadcrumb a {
+  color: var(--accent-bright);
+}
+
+/* Temática — Three container */
+.topic-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.topic-canvas-wrap {
+  position: relative;
+  height: min(62vh, 520px);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #000;
+}
+.topic-canvas-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.topic-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Actividad — split screen */
+.split-intro {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  max-width: 70ch;
+}
+
+.split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  min-height: 70vh;
+}
+
+@media (max-width: 960px) {
+  .split-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}
+
+.split-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.split-panel header {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(73, 73, 4, 0.35);
+  border-bottom: 1px solid var(--border);
+}
+
+.split-panel .body {
+  padding: 0.85rem;
+  flex: 1;
+  overflow: auto;
+  font-size: 0.9rem;
+}
+
+.split-panel.theory .body {
+  color: var(--muted);
+}
+
+.split-panel iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  min-height: 320px;
+  background: #111;
+}
+
+.quiz-q {
+  margin-bottom: 1rem;
+}
+.quiz-q strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.quiz-options label {
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.quiz-options input {
+  margin-right: 0.5rem;
+}
+
+.feedback {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.feedback.ok {
+  background: rgba(61, 124, 71, 0.25);
+  border: 1px solid var(--success);
+}
+.feedback.err {
+  background: rgba(180, 60, 60, 0.2);
+  border: 1px solid #a94442;
+}
+
+.byod-strip {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.byod-strip strong {
+  color: var(--text);
+}
+
+footer.shell-footer {
+  padding: 1rem 1.25rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}

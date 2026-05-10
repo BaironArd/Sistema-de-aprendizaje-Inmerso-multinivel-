@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>WebAR — SAIM</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
+    <style>
+      html,
+      body {
+ margin: 0;
+        height: 100%;
+        background: #000;
+      }
+      .hint {
+        position: fixed;
+        bottom: 6px;
+        left: 6px;
+        right: 6px;
+        color: #bfbfbf;
+        font: 12px/1.3 system-ui, sans-serif;
+        text-align: center;
+        z-index: 2;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+      <a-marker preset="hiro">
+        <a-entity position="0 0.35 0" scale="0.35 0.35 0.35">
+          <a-box position="-0.5 0 0" material="color: #494904; metalness: 0.3; roughness: 0.4"></a-box>
+          <a-sphere position="0.55 0 0" radius="0.35" material="color: #6b8f3c; metalness: 0.2; roughness: 0.45"></a-sphere>
+          <a-torus position="0 0.45 0" radius="0.35" radius-tubular="0.08" rotation="45 30 0" material="color: #c9a227"></a-torus>
+        </a-entity>
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>
+    <div class="hint">
+      Apunta la cámara al marcador Hiro (imagen estándar AR.js). Si no hay cámara, el visor puede quedarse en negro — la escena funciona en dispositivos compatibles HTTPS/localhost.
+    </div>
+  </body>
+</html>
