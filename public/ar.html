@@ -40,5 +40,19 @@
     <div class="hint">
       Apunta la cámara al marcador Hiro (imagen estándar AR.js). Si no hay cámara, el visor puede quedarse en negro — la escena funciona en dispositivos compatibles HTTPS/localhost.
     </div>
+    <script>
+      const hint = document.querySelector('.hint');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        hint.textContent = 'No se detecta soporte de cámara. Prueba en otro dispositivo compatible o activa la cámara en el navegador.';
+      } else {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then((stream) => {
+            stream.getTracks().forEach((track) => track.stop());
+          })
+          .catch(() => {
+            hint.textContent = 'No se pudo acceder a la cámara. Verifica permisos, usa HTTPS/localhost o prueba otro dispositivo con cámara.';
+          });
+      }
+    </script>
   </body>
 </html>

@@ -203,6 +203,10 @@ function routeActivity(unitId, activityId) {
         <div class="split-panel">
           <header>Simulación WebAR (AR.js · navegador)</header>
           <iframe title="WebAR" src="/ar.html" loading="lazy"></iframe>
+          <div class="ar-helper">
+            <a class="btn btn-ghost" href="/ar.html" target="_blank" rel="noopener noreferrer">Abrir AR en pantalla completa</a>
+            <p>Si el iframe no muestra la cámara, prueba en otra pestaña o usa un dispositivo compatible con cámara.</p>
+          </div>
         </div>
       </section>
       <div class="byod-strip">

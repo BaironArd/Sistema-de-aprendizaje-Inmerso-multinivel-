@@ -242,6 +242,20 @@ main.shell-main {
   background: #111;
 }
 
+.ar-helper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 0.85rem 1rem;
+  color: var(--muted);
+}
+
+.ar-helper p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 .quiz-q {
   margin-bottom: 1rem;
 }
