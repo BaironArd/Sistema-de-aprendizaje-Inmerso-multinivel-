@@ -7,6 +7,7 @@ import {
   resetProgress,
 } from './gamify.js';
 import { mountTopicScene, disposeTopicScene } from './topic-scene.js';
+import { fetchUserProgress, submitGrade } from './lms-api.js';
 
 const app = document.getElementById('app');
 
@@ -47,6 +48,23 @@ function escapeHtml(t) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+async function loadInitialProgress() {
+  try {
+    const lmsProgress = await fetchUserProgress('user123'); // Simular user ID
+    // Merge with local if needed
+    const local = getGamifyState();
+    const merged = {
+      points: Math.max(local.points, lmsProgress.points),
+      missions: [...new Set([...local.missions, ...lmsProgress.missions])],
+    };
+    // Save merged
+    await new Promise(resolve => setTimeout(resolve, 100)); // Simular save
+    console.log('Progreso inicial cargado desde LMS:', merged);
+  } catch (error) {
+    console.error('Error cargando progreso LMS:', error);
+  }
 }
 
 function getCourseProgress() {
@@ -333,6 +351,8 @@ function routeActivity(unitId, activityId) {
       fb.textContent = `Correcto: ${correct}/${total}. +${share} puntos. Misión completada.`;
       form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
       syncHeaderOnly();
+      // Submit grade to LMS
+      submitGrade(missionKey, (correct / total) * 100, 'user123').catch(console.error);
     } else {
       fb.style.display = 'block';
       fb.className = 'feedback err';
@@ -380,4 +400,4 @@ function navigate() {
 }
 
 window.addEventListener('hashchange', navigate);
-navigate();
+loadInitialProgress().then(navigate);
