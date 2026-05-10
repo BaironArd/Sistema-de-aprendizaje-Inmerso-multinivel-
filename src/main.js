@@ -27,6 +27,7 @@ async function renderHeader() {
         <span>Universidad FESC — 6.° semestre · Prototipo Web (Vite)</span>
       </div>
       <div class="stats-bar">
+        <a href="#/metricas" class="btn btn-ghost">📊 Métricas</a>
         <span class="pill" title="Puntos acumulados">${s.points} pts</span>
         <span class="pill" title="Misiones completadas">${s.missions.length} misiones</span>
         <button type="button" class="btn btn-ghost" id="btn-reset">Reiniciar progreso</button>
@@ -114,6 +115,101 @@ async function isActivityUnlocked(unit, activityId) {
   return isMissionDone(`${unit.id}:${previousActivity.id}`);
 }
 
+async function routeMetrics() {
+  const progress = await getCourseProgress();
+  const course = await getCourse();
+  const s = getGamifyState();
+
+  // Calcular métricas adicionales
+  const totalActivities = course.units.flatMap(u => u.activities).length;
+  const completedActivities = s.missions.length;
+  const completionRate = totalActivities ? Math.round((completedActivities / totalActivities) * 100) : 0;
+
+  const unitMetrics = await Promise.all(course.units.map(async (u) => {
+    const unitProgress = getUnitProgress(u);
+    const unlocked = await isUnitUnlocked(u.id);
+    return {
+      title: u.title,
+      progress: unitProgress.percent,
+      completed: unitProgress.done,
+      total: unitProgress.total,
+      unlocked,
+    };
+  }));
+
+  const recentMissions = s.missions.slice(-5).reverse(); // Últimas 5 misiones
+
+  app.innerHTML = `
+    ${await renderHeader()}
+    <main class="shell-main">
+      <nav class="breadcrumb"><a href="#/">Inicio</a> / Métricas de rendimiento</nav>
+      <div class="hero">
+        <h1>Métricas de rendimiento</h1>
+        <p>Seguimiento detallado de tu progreso en el curso de Arquitectura Multinivel</p>
+      </div>
+
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <h3>Progreso global</h3>
+          <div class="metric-value">${progress.percent}%</div>
+          <div class="metric-detail">${progress.done}/${progress.total} actividades completadas</div>
+        </div>
+
+        <div class="metric-card">
+          <h3>Puntos acumulados</h3>
+          <div class="metric-value">${progress.points}</div>
+          <div class="metric-detail">${progress.missions} misiones completadas</div>
+        </div>
+
+        <div class="metric-card">
+          <h3>Tasa de completación</h3>
+          <div class="metric-value">${completionRate}%</div>
+          <div class="metric-detail">Actividades realizadas vs total</div>
+        </div>
+
+        <div class="metric-card">
+          <h3>Unidades desbloqueadas</h3>
+          <div class="metric-value">${unitMetrics.filter(u => u.unlocked).length}/${unitMetrics.length}</div>
+          <div class="metric-detail">Unidades disponibles para estudio</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Progreso por unidad</h2>
+        <div class="unit-metrics">
+          ${unitMetrics.map(u => `
+            <div class="unit-metric ${u.unlocked ? '' : 'unit-metric-locked'}">
+              <div class="unit-metric-header">
+                <h3>${escapeHtml(u.title)}</h3>
+                <span class="status-pill ${u.unlocked ? 'done' : 'pending'}">${u.unlocked ? 'Desbloqueada' : 'Bloqueada'}</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${u.progress}%"></div>
+              </div>
+              <div class="metric-detail">${u.completed}/${u.total} actividades (${u.progress}%)</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>
+
+      <section>
+        <h2>Misiones recientes</h2>
+        ${recentMissions.length > 0 ? `
+          <ul class="recent-missions">
+            ${recentMissions.map(m => `<li class="mission-item">${escapeHtml(m)}</li>`).join('')}
+          </ul>
+        ` : '<p>No hay misiones completadas aún.</p>'}
+      </section>
+
+      <div class="byod-strip">
+        <strong>Analítica educativa.</strong> Estas métricas ayudan a identificar áreas de mejora y celebrar logros. En un LMS real, se integrarían con sistemas de seguimiento más avanzados.
+      </div>
+    </main>
+    ${renderFooter()}
+  `;
+  bindReset();
+}
+
 function routeLocked(title, message, backHref = '#/') {
   app.innerHTML = `
     ${renderHeader()}
@@ -169,10 +265,18 @@ async function routeHome() {
     </main>
     ${renderFooter()}
   `;
+function routeLocked(title, message, backHref = '#/') {
+  app.innerHTML = `
+    ${renderHeader()}
+    <main class="shell-main empty-state">
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <a class="btn" href="${backHref}">Volver</a>
+    </main>
+    ${renderFooter()}
+  `;
   bindReset();
 }
-
-async function routeUnit(unitId) {
   const u = await findUnit(unitId);
   if (!u) return routeNotFound();
   if (!(await isUnitUnlocked(u.id))) {
@@ -399,6 +503,7 @@ async function navigate() {
   if (parts[0] === 'unidad' && parts[1]) return await routeUnit(parts[1]);
   if (parts[0] === 'tematica' && parts[1] && parts[2]) return await routeTopic(parts[1], parts[2]);
   if (parts[0] === 'actividad' && parts[1] && parts[2]) return await routeActivity(parts[1], parts[2]);
+  if (parts[0] === 'metricas') return await routeMetrics();
   routeNotFound();
 }
 
