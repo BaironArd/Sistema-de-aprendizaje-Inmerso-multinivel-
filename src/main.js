@@ -49,7 +49,32 @@ function escapeHtml(t) {
     .replace(/"/g, '&quot;');
 }
 
+function getCourseProgress() {
+  const s = getGamifyState();
+  const activities = course.units.flatMap((u) => u.activities.map((a) => `${u.id}:${a.id}`));
+  const done = activities.filter(isMissionDone).length;
+  const total = activities.length;
+  return {
+    points: s.points,
+    missions: s.missions.length,
+    done,
+    total,
+    percent: total ? Math.round((done / total) * 100) : 0,
+  };
+}
+
+function getUnitProgress(unit) {
+  const total = unit.activities.length;
+  const done = unit.activities.filter((a) => isMissionDone(`${unit.id}:${a.id}`)).length;
+  return {
+    done,
+    total,
+    percent: total ? Math.round((done / total) * 100) : 0,
+  };
+}
+
 function routeHome() {
+  const progress = getCourseProgress();
   const cards = course.units
     .map(
       (u) => `
@@ -69,6 +94,17 @@ function routeHome() {
         <h1>Arquitectura multinivel</h1>
         <p>${escapeHtml(course.subtitle)}</p>
       </div>
+      <section class="progress-panel">
+        <div>
+          <strong>Progreso global:</strong>
+          <span class="pill">${progress.percent}% completado</span>
+        </div>
+        <div>
+          <span class="pill">${progress.points} pts</span>
+          <span class="pill">${progress.done}/${progress.total} actividades completas</span>
+          <span class="pill">${progress.missions} misiones</span>
+        </div>
+      </section>
       <section class="grid-cards">${cards}</section>
       <div class="byod-strip">
         <strong>Estrategia BYOD.</strong> Abre esta app en tu móvil o portátil; el módulo AR usa la cámara cuando lo permites.
@@ -83,19 +119,24 @@ function routeHome() {
 function routeUnit(unitId) {
   const u = findUnit(unitId);
   if (!u) return routeNotFound();
+  const unitProgress = getUnitProgress(u);
   const topicRows = u.topics
-    .map(
-      (t) => `
-      <li class="card" style="list-style:none;margin-bottom:0.75rem">
-        <h2 style="font-size:1rem">${escapeHtml(t.title)}</h2>
+    .map((t) => {
+      const done = isMissionDone(`${u.id}:${t.activityId}`);
+      return `
+      <li class="card topic-card" style="list-style:none;margin-bottom:0.75rem">
+        <div class="topic-card-header">
+          <h2 style="font-size:1rem">${escapeHtml(t.title)}</h2>
+          <span class="status-pill ${done ? 'done' : 'pending'}">${done ? 'Completo' : 'Pendiente'}</span>
+        </div>
         <p>${escapeHtml(t.blurb)}</p>
         <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
           <a class="btn" href="#/tematica/${u.id}/${t.id}">Exploración inmersiva</a>
           <a class="btn btn-ghost" href="#/actividad/${u.id}/${t.activityId}">Ir a actividad vinculada</a>
         </div>
       </li>
-    `,
-    )
+    `;
+    })
     .join('');
 
   app.innerHTML = `
@@ -106,6 +147,11 @@ function routeUnit(unitId) {
         <h1>${escapeHtml(u.title)}</h1>
         <p>${escapeHtml(u.summary)}</p>
       </div>
+      <section class="unit-progress-banner">
+        <strong>Progreso de unidad:</strong>
+        <span class="pill">${unitProgress.done}/${unitProgress.total} actividades</span>
+        <span class="pill">${unitProgress.percent}% completado</span>
+      </section>
       <h2 style="font-size:1rem;margin-bottom:0.75rem">Temáticas (nivel exploratorio)</h2>
       <ul style="padding:0;margin:0">${topicRows}</ul>
     </main>

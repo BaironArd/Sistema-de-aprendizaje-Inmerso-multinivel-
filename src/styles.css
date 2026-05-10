@@ -107,6 +107,51 @@ main.shell-main {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
+.progress-panel,
+.unit-progress-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem 1rem 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  background: rgba(73, 73, 4, 0.16);
+  border: 1px solid var(--border);
+}
+
+.topic-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status-pill.done {
+  background: rgba(61, 124, 71, 0.2);
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+.status-pill.pending {
+  background: rgba(191, 191, 191, 0.12);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
