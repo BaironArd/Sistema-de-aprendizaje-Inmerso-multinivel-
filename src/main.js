@@ -73,18 +73,53 @@ function getUnitProgress(unit) {
   };
 }
 
+function getUnitIndex(unitId) {
+  return course.units.findIndex((u) => u.id === unitId);
+}
+
+function isUnitUnlocked(unitId) {
+  const index = getUnitIndex(unitId);
+  if (index <= 0) return true;
+  const previousUnit = course.units[index - 1];
+  return previousUnit.activities.every((a) => isMissionDone(`${previousUnit.id}:${a.id}`));
+}
+
+function isActivityUnlocked(unit, activityId) {
+  if (!isUnitUnlocked(unit.id)) return false;
+  const index = unit.activities.findIndex((a) => a.id === activityId);
+  if (index <= 0) return true;
+  const previousActivity = unit.activities[index - 1];
+  return isMissionDone(`${unit.id}:${previousActivity.id}`);
+}
+
+function routeLocked(title, message, backHref = '#/') {
+  app.innerHTML = `
+    ${renderHeader()}
+    <main class="shell-main empty-state">
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <a class="btn" href="${backHref}">Volver</a>
+    </main>
+    ${renderFooter()}
+  `;
+  bindReset();
+}
+
 function routeHome() {
   const progress = getCourseProgress();
   const cards = course.units
-    .map(
-      (u) => `
-      <article class="card">
+    .map((u) => {
+      const unlocked = isUnitUnlocked(u.id);
+      return `
+      <article class="card ${unlocked ? '' : 'card-locked'}">
         <h2>${escapeHtml(u.title)}</h2>
         <p>${escapeHtml(u.summary)}</p>
-        <a class="btn" href="#/unidad/${u.id}">Abrir unidad</a>
+        ${unlocked
+          ? `<a class="btn" href="#/unidad/${u.id}">Abrir unidad</a>`
+          : `<button class="btn btn-disabled" type="button">Unidad bloqueada</button>`}
       </article>
-    `,
-    )
+    `;
+    })
     .join('');
 
   app.innerHTML = `
@@ -119,6 +154,13 @@ function routeHome() {
 function routeUnit(unitId) {
   const u = findUnit(unitId);
   if (!u) return routeNotFound();
+  if (!isUnitUnlocked(u.id)) {
+    return routeLocked(
+      'Unidad bloqueada',
+      'Completa las actividades de la unidad anterior para desbloquear esta unidad.',
+      '#/',
+    );
+  }
   const unitProgress = getUnitProgress(u);
   const topicRows = u.topics
     .map((t) => {
@@ -164,6 +206,8 @@ function routeTopic(unitId, topicId) {
   const u = findUnit(unitId);
   const t = findTopic(u, topicId);
   if (!u || !t) return routeNotFound();
+  const activity = u.activities.find((a) => a.id === t.activityId);
+  const canContinue = activity ? isActivityUnlocked(u, activity.id) : true;
 
   app.innerHTML = `
     ${renderHeader()}
@@ -178,8 +222,11 @@ function routeTopic(unitId, topicId) {
       <div class="topic-canvas-wrap" id="topic-canvas-root"></div>
       <p class="topic-hint">Arrastra para orbitar · rueda para zoom · espacio exploratorio antes de la teoría formal.</p>
       <div style="margin-top:0.5rem">
-        <a class="btn" href="#/actividad/${u.id}/${t.activityId}">Continuar a actividad (pantalla dividida)</a>
+        ${canContinue
+          ? `<a class="btn" href="#/actividad/${u.id}/${t.activityId}">Continuar a actividad (pantalla dividida)</a>`
+          : `<button class="btn btn-disabled" type="button">Actividad bloqueada</button>`}
       </div>
+      ${!canContinue ? '<p class="locked-note">Esta temática está bloqueada hasta completar la misión previa en la unidad.</p>' : ''}
     </main>
     ${renderFooter()}
   `;
@@ -194,6 +241,7 @@ function routeActivity(unitId, activityId) {
   const act = findActivity(u, activityId);
   if (!u || !act) return routeNotFound();
 
+  const unlocked = isActivityUnlocked(u, activityId);
   const missionKey = `${unitId}:${activityId}`;
   const done = isMissionDone(missionKey);
 
@@ -241,8 +289,9 @@ function routeActivity(unitId, activityId) {
             <p>Obtén todos los aciertos para sumar <strong>${act.missionPoints} puntos</strong> y cerrar la misión.</p>
             <form id="quiz-form">
               ${quizHtml}
-              <button type="submit" class="btn" ${done ? 'disabled' : ''}>Validar respuestas</button>
+              <button type="submit" class="btn" ${done || !unlocked ? 'disabled' : ''}>Validar respuestas</button>
             </form>
+            ${!unlocked ? '<p class="locked-note">Esta misión está bloqueada. Completa la misión previa para desbloquear el reto.</p>' : ''}
             <div id="quiz-feedback" class="feedback" style="display:none"></div>
           </div>
         </div>
@@ -268,7 +317,7 @@ function routeActivity(unitId, activityId) {
   const fb = document.getElementById('quiz-feedback');
   form?.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (done || isMissionDone(missionKey)) return;
+    if (!unlocked || done || isMissionDone(missionKey)) return;
     let correct = 0;
     let total = act.quiz.length;
     for (const q of act.quiz) {

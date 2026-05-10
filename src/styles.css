@@ -194,6 +194,26 @@ main.shell-main {
   color: var(--text);
 }
 
+.btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.card-locked {
+  opacity: 0.75;
+}
+
+.locked-note {
+  margin-top: 0.75rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: rgba(191, 191, 191, 0.08);
+  border: 1px solid rgba(191, 191, 191, 0.2);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .breadcrumb {
   font-size: 0.85rem;
   color: var(--muted);
