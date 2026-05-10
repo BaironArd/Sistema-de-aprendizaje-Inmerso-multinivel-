@@ -117,14 +117,30 @@ export function mountTopicScene(container, preset) {
   };
   window.addEventListener('resize', onResize);
 
-  const onMouseMove = (event) => {
-    const rect = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  const onKeyDown = (event) => {
+    const step = 0.1;
+    switch (event.key) {
+      case 'ArrowUp':
+        camera.position.z -= step;
+        break;
+      case 'ArrowDown':
+        camera.position.z += step;
+        break;
+      case 'ArrowLeft':
+        camera.position.x -= step;
+        break;
+      case 'ArrowRight':
+        camera.position.x += step;
+        break;
+      case ' ':
+        event.preventDefault();
+        root.rotation.y += 0.1;
+        break;
+    }
   };
-  renderer.domElement.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('keydown', onKeyDown);
 
-  active = { renderer, scene, camera, controls, onResize, onMouseMove, raycaster, mouse, hovered: null, frame: 0 };
+  active = { renderer, scene, camera, controls, onResize, onMouseMove, onKeyDown, raycaster, mouse, hovered: null, frame: 0 };
 
   function tick() {
     if (!active || active.renderer !== renderer) return;
@@ -166,6 +182,7 @@ export function disposeTopicScene() {
   if (!active) return;
   cancelAnimationFrame(active.frame);
   window.removeEventListener('resize', active.onResize);
+  window.removeEventListener('keydown', active.onKeyDown);
   active.renderer.domElement.removeEventListener('mousemove', active.onMouseMove);
   active.controls.dispose();
   active.scene.traverse((obj) => {
